@@ -1,0 +1,676 @@
+\documentclass[11pt]{article}
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+% \usepackage{tgschola} % or any other font package you like
+\usepackage{lastpage}
+\usepackage{parskip} % Remove paragraph indentation
+\usepackage{amsmath} % for align
+\usepackage{amsthm} % for proof pkg
+\usepackage{amssymb}
+%\usepackage{tikz}
+\usepackage{graphicx}
+\usepackage{proof}
+\usepackage{enumitem}
+% \usepackage[shortlabels]{enumerate}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{hyperref}
+
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{proposition}{Proposition}[section]
+
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}  % Use Input in the format of Algorithm
+\renewcommand{\algorithmicensure}{\textbf{Output:}} % Use Output in the format of Algorithm  
+
+
+
+\newcommand{\yourtitle}{ORIE 6334: Spectral Graph Theory}
+\newcommand{\yoursubtitle}{Final Project: Spectral Properties of Network Infection Models}
+\newcommand{\yourname}{aak228}
+
+
+\newtheorem{claim}{Claim}
+
+\pagestyle{fancy}
+\headheight 13.6pt
+\fancyhf{}
+\fancyhead[L]{%
+  \footnotesize%\sffamily
+  \yourtitle\\
+  \yoursubtitle}
+\fancyhead[R]{\yourname}
+\fancyfoot[C]{\thepage\ of \pageref{LastPage}}
+% \usepackage[
+%   colorlinks,
+%   breaklinks,
+%   pdftitle={\yourname - \soptitle},
+%   pdfauthor={\yourname},
+%   unicode
+% ]{hyperref}
+
+\begin{document}
+
+\newcommand{\Half}{\frac{1}{2}}
+
+
+
+\begin{center}\LARGE\yourtitle,\\ \yoursubtitle\\
+\large Ariah Klages-Mundt (aak228))
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+
+The purpose of this project is to investigate connections between the Susceptible-Infected-Resistant (SIR) and Susceptible-Infected-Susceptible (SIS) network infection models and the spectrum of the underlying graph. In the following, we will work with a population of $n$ nodes, connected by a network structure given by an undirected graph $G=(V,E)$ with node set $V=\{1,\ldots,n\}$ and edge set $E$. Depending on the model, there will be three possible states for each node: susceptible (S), infected (I), and resistant (R). There will be an initial set of infected nodes at time 0, which is assumed to be non-empty. All other nodes will be susceptible at time 0. The SIR and SIS models are then Markov chains describing the evolution of the epidemic on the network.
+
+We are specifically interested in the following questions. What impact does the graph topology have on the spread of the infection? What are the key features of the topology that determine the virulence of an infection? In particular, we are interested in epidemic thresholds related to the spectrum of matrices related to $G$.
+
+In the remainder of this section, we introduce some spectral properties of the adjacency matrix and some basic results of Markov chains that we will use later in the paper. In Section~\ref{sec:SIR}, we introduce the Reed-Frost SIR model and prove a spectral connection with infection size. In Section~\ref{sec:SIS}, we introduce the SIS model and prove spectral connections with conditions for fast extinction and long survival of contagion. And in Section~\ref{sec:conclusion}, we give some concluding remarks, including ideas for further generalizations and applications of the results from the previous sections.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Spectral Properties of the Adjacency Matrix}
+
+We will represent the graph $G$ by its adjacency matrix $A$. Since $G$ is given to be undirected, $A$ is symmetric, non-negative, and has all real eigenvalues. We will assume $G$ is connected. Then, by the Perron-Frobenius Theorem proven in class, the eigenvalue $\rho$ of $A$ with the largest absolute value is positive and has multiplicity 1, and the associated eigenvector has non-negative entries.
+
+\begin{definition}
+The \textbf{spectral radius} $\rho(A)$ of a matrix $A$ is the maximum of the absolute value of the eigenvalues of $A$.
+\end{definition}
+
+Connecting this with a lemma proved in class, we have the following proposition restricting the spectral radius.
+
+\begin{proposition} \label{prop:max_degree}
+For a connected, undirected graph $G$ with adjacency matrix $A$,
+$$d_{ave} \leq \rho(A) \leq \Delta,$$ where $d_{ave}$ is the average degree and $\Delta$ is the maximum degree
+\end{proposition}
+
+\begin{proof}
+Follows directly from Lemma~4 in Lecture~4, noting that $\rho(A) = \lambda_1$ given the conditions.
+\end{proof}
+
+The spectral radius is related to the operator norm of $A$, which we now define.
+
+\begin{definition}
+The \textbf{operator norm} of a matrix $A$ is
+$$\| A\| = \inf \{ c \geq 0 : \| Av\| \leq c \| v \| \text{ for all } v \in \mathbb{R}^n \}.$$
+\end{definition}
+
+The operator norm of $A$ is related to the spectral radius using the following proposition.
+
+\begin{proposition} \label{prop:matrix_norm}
+For $A\in \mathbb{R}^{n\times n}$, and using the Euclidean norm on vectors, $\|A\| = \sqrt{\rho(A^T A)}$.
+\end{proposition}
+
+\begin{proof}
+Note that $A^T A$ is symmetric. And so
+$$\rho(A^T A) = \max_{x\in \mathbb{R}^n} \frac{x^T A^T A x}{x^T x},$$
+the largest eigenvalue. Let $c$ be such that $\|A\| \leq c \|v\|$ for all $v\in \mathbb{R}^n$. Then
+$$c^2 v^T v \geq \|A v\|^2 = (Av)^T Av = v^T A^T A v.$$
+Rearranging and maximizing, we have
+$$ c^2 \geq \max_{v\in \mathbb{R}^n}\frac{v^T A^T Av}{v^T v} = \rho(A^T A).$$
+So we infer that $\|A\| \geq \sqrt{\rho(A^T A)}$. And since $\rho(A^T A)$ satisfies such a $c$, we conclude that \\
+$\|A\| = \sqrt{\rho(A^T A)}$.
+\end{proof}
+
+This simplifies further in the symmetric case.
+
+\begin{corollary} \label{cor:matrix_norm}
+If $A\in \mathbb{R}^{n\times n}$ is symmetric and we use the Euclidean norm on vectors, $\|A\| = \rho(A)$.
+\end{corollary}
+
+\begin{proof}
+In this case $A^T A = A^2$. And so $\rho(A^T A) = \rho(A^2) = \rho(A)^2$.
+\end{proof}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Markov Chains}
+We now provide a brief introduction to Markov Chains in order to build the machinery we will need in analyzing our infection models.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Discrete- and Continuous-Time Markov Chains}
+
+Here, we follow lecture notes from \cite{sigman:ctmc}.
+
+\begin{definition}
+A \textbf{discrete-time Markov chain} is a sequence of random variables $\{X_i\}_{i\in \mathbb{N}}$ such that the probability of moving to the next state depends only on the present state and not on previous states. I.e.,
+$$\Pr(X_{n+1} = x | X_1 = x_1,X_2 = x_2,\ldots,X_n=x_n) = \Pr(X_{n+1}=x|X_n=x_n),$$
+as long as both conditional probabilities are well defined (i.e., when $\Pr(X_1=x_1,\ldots,X_n=x_n)>0$).
+\end{definition}
+
+The possible values of $X_i$ form a countable set $S$ called the \textbf{state space} of the chain. A \textbf{transition matrix} describes the probabilities of going from one state at time $n$ to the other states at time $n+1$. For \textbf{time-homogeneous} Markov chains, the transition matrix is independent of $n$.
+
+\begin{definition}
+A \textbf{continuous-time Markov chain} is a stochastic process $\{X(t)\}_{t\geq 0}$ with a discrete state space $S$ such that for all $t\geq 0,s\geq 0, i\in S, j\in S,$
+$$\Pr\Big(X(s+t)=j |X(s)=i,\{X(u):0\leq u<s\}\Big) = \Pr\Big(X(s+t) = j|X(s)=i\Big) = P_{ij}(t)$$
+\end{definition}
+
+$P_{ij}(t)$ is the probability that the chain will be in state $j$ in $t$ units of time, given that it is currently in state $i$. For each $t\geq 0$, there is a transition matrix
+$$P(t) = (P_{ij}(t))$$
+with $P(0)=I$.
+
+In the continuous case, time-homogenous means that the distribution of the future, given the present state $X(s)$, does not depend on the present time $s$, but only on the present state $X(s)=i$ and the time $t$ yet to elapse from time $s$. Symbolically, this is
+$$P_{ij}(s+t) = \Pr(X(t) = j|X(0)=i),$$
+given the present time is $s$ and the present state is $i$.
+
+Unlike the discrete-time case, there is no set value of $t$ until the next transition. Instead, there is a continuum of possible times $t$.
+
+\begin{definition}
+The time spent by a continuous-time Markov chain in a given state $i\in S$ is the \textbf{holding time} $H_i$ in state $i$.
+\end{definition}
+$H_i$ is a continuous, strictly positive random variable independent of the past. Holding times must have the memoryless property and thus are exponentially distributed.
+ 
+An exponential distribution is completely determined by its rate, so, for each $i\in S$, there exists a constant rate $\alpha_i >0$, such that $H_i \sim \exp(\alpha_i)$. This characterizes a continuous-time Markov chain as ``\textit{a stochastic process that makes transitions from state to state, independent of the past, according to a discrete-time Markov chain, but once entering a state remains in that state, independent of the past, for an exponentially distributed amount of time before changing state again.}''
+
+Thus, a continuous-time Markov chain can be described by a transition matrix $P=(P_{ij})$ that describes how the chain changes state step-by-step at transition times, together with a set of rates $\{\alpha_i:i\in S\}$, the holding time rates. The expected holding time at state $i$ is $\mathbf{E}[H_i] = 1/\alpha_i$.
+
+Assume $P_{ii}=0$ for $i\in S$. For $i\neq j$, $P'_{ij} = a_i P_{ij}$ as the transition rate from state $i$ to state $j$ given that the chain is currently in state $i$. The proof of this is not too difficult; it involves recalling results of the Poisson process, but we will not go through it here. For $i=j$, we want to use $P'_{ii} = -a_i$.
+
+\begin{definition}
+The matrix $Q=P'$ given above is the \textbf{transition rate matrix} or \textbf{infinitesimal generator} of the Markov chain.
+\end{definition}
+
+\begin{definition}
+Let $\tau_n$ denote the time at which the $n$th change of state (transition) occurs. $X_n = X(\tau_n+)$, the state right after the $n$th transition, defines the underlying discrete-time \textbf{embedded Markov chain}.
+\end{definition}
+$\{X_n\}$ keeps track, consecutively, of the states visited right after each transition, and moves from state to state according to the one-step transition probabilities $P_{ij} = \Pr(X_{n+1}=j|X_n=i)$. The transition matrix $(P_{ij})$, together with the holding time rates $\{\alpha_i\}$, completely determines the continuous-time Markov chain.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Uniformization of Continuous-Time Markov Chains}
+
+We now introduce the concept of \textbf{uniformization} of a continuous-time Markov chain. For this, we follow the lecture notes from \cite{whitt:ctmc}.
+
+In a continuous-time Markov chain, we've seen that holding times/transitions between different states are distributed exponentially with rates $\alpha_i$ that can vary from state to state. However, if the rates $\alpha_i$ were the same, we could represent the continuous time chain directly as a discrete time chain with transitions governed by an independent Poisson process. I.e., we would have the continuous-time Markov chain $X(t) = Y_{N(t)}$ where $\{Y_i\}$ is a discrete-time embedded Markov chain and $N(t)$ is a Poisson process. The idea of uniformization is that, when there exists a maximum holding time rate $\alpha = \max_i \alpha_i$ (or more generally, an upper bound on holding time rates), then we can transform the continuous-time Markov chain into a chain with uniform rates and we can simulate every transition in any state by generating a Poisson process with rate $\geq \alpha$ and then sub-sampling to get slower Poisson processes.
+
+To do this, we introduce one-step transitions from some states to themselves (these are transitions during which the process doesn't actually move; we had previously treated the probability of such transitions as 0) and generate potential transitions from a Poisson process with rate $\alpha$. From state $i$, each potential transition is a real transition (to another state) with probability $\alpha_i/\alpha$ and a transition from $i$ to $i$ with probability $1-\alpha_i/\alpha$, independent of past events. This is an independent thinning/sub-sampling of the Poisson process with rate $\alpha$ in each state $i$, which creates real transitions in each state $i$ according to a Poisson process with rate $\alpha_i$ as in the original model. We formalize this as follows:
+
+Uniformization changes the transition matrix of the discrete-time embedded Markov chain to allow transitions from a state to itself. We construct the new one-step transition matrix $\tilde P$ from the continuous time transition rate matrix $Q$ and $\alpha$ via $\tilde P = I + \frac{1}{\alpha}Q$. Component-wise, this is
+$$\tilde P_{ij} = \frac{Q_{ij}}{\alpha} \hspace{1cm} \text{for } j\neq i,$$
+$$\tilde P_{ii} = q - \sum_{j\neq i} \tilde P_{ij} = 1 - \frac{\alpha_i}{\alpha} = 1+\frac{Q_{ii}}{\alpha}.$$
+
+From this, we can express the continuous time transition chain's transition probabilities as
+$$P_{ij}(t) := \Pr(X(t) = j|X(0)=i) = \sum_{i=0}^\infty \tilde P_{ij}^k \Pr(N(t) = k).$$
+See \cite{whitt:ctmc} for a proof that this leaves the probability law of the continuous-time Markov chain unchanged.
+
+Uniformization allows us to extend results for discrete-time Markov chains to continuous-time Markov chains using the discrete-time embedded Markov chain.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Markov Chain Coupling}
+
+The proofs for continuous-time infection processes rely on a general coupling technique in the context of skip-free Markov jump processes. This will allow us to relate the trajectories of different Markov processes. We will introduce this material and build the machinery that we will later be used in Section~\ref{sec:SIS}. Here, we follow the proofs from \cite{draief:epidemics}, clarifying and correcting as necessary.
+
+\begin{definition}
+Let $K>0$ be an integer. A \textbf{skip-free Markov jump process} on $\mathbb{N}^K$ is a Markov jump process on this state space, whose transition rates $q(x,y)$, for $x\neq y \in \mathbb{N}^K$, are all zero except when $y=x \pm e_i$ for some $i\in\{ i,\ldots,K\}$. The transition rates $q(x,x+e_i),q(x,x-e_i)$ are referred to as the birth and death rates, respectively, at site $i$ when in state $x$.
+\end{definition}
+
+We will need the following coupling result. The idea behind this is simple. The result formally argues that a certain Markov chain is sample-pathwise dominated by another. I.e., given a Markov chain $X(t)$, we can construct another Markov chain $Y(t)$ such that $X(t)\leq Y(t)$ for all $t$. For instance, consider two epidemic simulations that use the same random variables, but for which the initially infected nodes in the first is a strict superset of the second. Intuitively, when a node is infected in the first, it is also infected in the second, but not necessarily the reverse.
+
+\begin{theorem} \label{thm:coupling}
+Consider two skip-free Markov jump processes $X,X'$ defined on the state space $\mathbb{N}^K$, with respective birth rates $\beta_i(x),\beta_i'(x)$ and death rates $\delta_i(x),\delta_i'(x)$, for $x\in \mathbb{N}^K$ and $i\in \{1,\ldots,K\}$.\\
+Assume that $\forall x,y\in \mathbb{N}^K$ such that $x\leq y$ (i.e., $x_i\leq y_i$ $\forall i$), the following holds:
+\begin{equation} \label{eqn:coupling_condition}
+x_i = y_i \implies \beta_i(x) \leq \beta_i'(y) \text{ and } \delta_i(x) \geq \delta_i'(y).
+\end{equation}
+Then, given initial conditions $X(0),X'(0)$ satisfying $X(0)\leq X'(0)$, we can construct the two processes $X,X'$ jointly so that $\forall t\geq 0$, the ordering $X(t)\leq X'(t)$ is preserved.
+\end{theorem}
+
+\begin{proof}
+Consider the Markov process on the state space $\{(x,x')\in \mathbb{N}^K \times \mathbb{N}^K: x\leq x'\}$, with all transition rates zero except for the ones defined as follows. For any state $(x,x')$ and $i\in\{1,\ldots,K\}$, if $x_i < x_i'$ the non-zero transition rates are
+$$\begin{aligned}
+q((x,x'),(x+e_i,x')) &= \beta_i(x),\\
+q((x,x'),(x,x'+e_i)) &= \beta_i'(x'),\\
+q((x,x'),(x-e_i,x')) &= \delta_i(x),\\
+q((x,x'),(x,x'-e_i)) &= \delta_i'(x').\\
+\end{aligned}$$
+When $x_i=x_i'$, the non-zero transition rates are
+$$\begin{aligned}
+q((x,x'),(x+e_i,x'+e_i)) &= \beta_i(x),\\
+q((x,x'),(x,x'+e_i)) &= \beta_i'(x') - \beta_i(x),\\
+q((x,x'),(x-e_i,x'-e_i)) &= \delta_i'(x'),\\
+q((x,x'),(x-e_i,x')) &= \delta_i(x) - \delta_i'(x').\\
+\end{aligned}$$
+Given condition~(\ref{eqn:coupling_condition}), these terms are non-negative. To conclude the proof of Theorem~\ref{thm:coupling}, we will establish that the Markov process $(X(t),X'(t))_{t>0}$, which has initial condition $(X(0),X'(0))$ and transition rates specified above, has component processes $(X(t))_{t>0}$ and $(X'(t))_{t>0}$ that are skip-free Markov jump processes with birth and death rates given by $(\beta,\delta)$ and $(\beta',\delta')$ respectively. We do this in the following lemma. Then, the result follows as, by construction, $X(t) \leq X'(t)$ for $t>0$.
+
+\begin{lemma} \label{lemma:coupling}
+Let $\{Y(t)\}_{t\geq 0}$ be a Markov jump process on a countable state space $E$ with transition rates $q(x,y)$ for $x,y\in E$. Let $f:E\rightarrow F$ be a function from $E$ to another countable state space $F$. Assume that there exists a function $\tilde q(u,v)$ defined on $F\times F$ such that, $\forall i\in E, v\in F$, 
+$$\sum_{j:f(j)=v} q(i,j) = \tilde q(f(i),v).$$
+Further, assume that there is a maximum holding time rate over all states.
+Then the image process $Z(t):= f(Y(t))$ is a Markov jump process on $F$, with transition rates $\tilde q(u,v)$.
+\end{lemma}
+
+\begin{proof}
+The first step is to prove the analogous result for discrete-time Markov chains. Let $(X_k)_{k\in \mathbb{N}}$ be a Markov chain with transition matrix $P=(p(x,y))_{x,y\in \mathbb{N}}$. Let $Y_k = f(x_k)$, where $f$ is a function such that a transition matrix $\tilde P$ exists satisfying
+\begin{equation} \label{eqn:trans_func_cond}
+\sum_{y:f(y)=v} p(x,y) = \tilde p(f(x),v).
+\end{equation}
+
+Then
+\begin{equation} \label{eqn:mc_lemma_prob_chain}
+\begin{aligned}
+P(Y_1 = y_1,\ldots Y_k = y_k | Y_0 = y_0) &= \frac{\sum_{x_i,f(x_i)=y_i,i=0,\ldots,k} \Pr(X_0 = x_0,\ldots, X_k = x_k)}{\sum_{x_0,f(x_0)=y_0} \Pr(X_0=x_0)} \\
+	&= \frac{\sum_{x_i,f(x_i)=y_i,i=0,\ldots,k} \Pr(X_0=x_0) \prod_{i=0}^{k-1} p(x_i,x_i+1)}{\sum_{x_0,f(x_0)=y_0} \Pr(X_0=x_0)}.
+\end{aligned}
+\end{equation}
+The first equivalence follows from the definition of conditional probability, and the second follows from independence.
+Condition~(\ref{eqn:trans_func_cond}) implies that
+$$\sum_{x_k,f(x_k)=y_k} p(x_{k-1},x_k) = \tilde p(y_{k-1},y_k).$$
+Then, by induction over the number of steps $k$
+$$\Pr(Y_1=y_1,\ldots,Y_k=y_k|Y_0=y_0) = \prod_{i=0}^{k-1} \tilde p(y_i,y_{i+1}).$$
+To illustrate the base case ($k=1$), expression~(\ref{eqn:mc_lemma_prob_chain}) simplifies when considering all possible transitions with a given $x_0$ and mapping into a given $y_1=f(x_1)$. We can take $\Pr(X_0=0)$ out of the sum and cancel with the denominator to get
+$$\Pr(Y_1=y_1|Y_0=y_0) = \sum_{x_1:f(x_1)=y_1} p(x_0,x_1) = \tilde p(y_0,y_1).$$
+
+The result means that the image process $\{Y_k\}_{k\geq 0}$ is a Markov chain with transition matrix $\tilde P$, so we have proven the discrete time case.
+
+
+For the continuous time case, we revert to using the processes $Y(t),Z(t)$ as defined in the lemma statement. A difference from the discrete time case is that now the image jump process $Z(t)=f(Y(t))$ may stay in the same state $z$, while $Y(t)$ jumps between states $y_i$ such that $f(y_i)=z$. To get around this, since we have a maximum holding time rate over all states, we can perform uniformization and reduce our problem to analyzing the behavior of the discrete-time embedded Markov chain, from which the result follows.
+\end{proof}
+
+
+To conclude the proof of Theorem~\ref{thm:coupling} we need to use the previous lemma to show that components of the coupled process have the desired dynamics. First, note that we have a maximum holding time rate in this problem. This is because we effectively have a finite state space if we consider each step individually as we can at most move distance 1 in a component from the given initial state; thus the uniformization from the lemma applies.
+
+Let $F:\mathbb{N}^K \times \mathbb{N}^K \rightarrow \mathbb{N}^K$ be defined by $f(x,x')=x$. The following needs verification: for any $x$, $x' \geq x$, and $y\in \mathbb{N}^K$,
+$$\sum_{z\in \mathbb{N}^K} q((x,x'),(y,z)) =
+\begin{cases}
+\beta_i(x) \hspace{0.5cm} & \text{if } y = x+e_i \\
+\delta_i(x) \hspace{0.5cm} & \text{if } y=x-e_i \\
+0 \hspace{0.5cm} & \text{otherwise.}
+\end{cases}$$
+This needs to be checked for the second component as well, both of which follow from the rate specifications. We will leave this as a future exercise in order to move on to the models and spectral implications.
+\end{proof}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{SIR Model} \label{sec:SIR}
+
+In this section, we introduce the Reed-Frost discrete-time SIR epidemic model. We will follow the proofs from the book \cite{draief:epidemics} and paper \cite{draief:SIR_paper}, clarifying and inserting details as necessary.
+
+In the Reed-Frost model, epidemic evolution is described by a discrete-time Markov chain. Let $X_v(t)$ be the indicator that node $v$ is labeled infected as of time $t$ and $Y_v(t)$ the indicator that it is resistant (effectively removed from the graph). Each node that is infected as of time $t$ has probability $\beta$ of independently infecting each of its neighbors. Each infected node becomes resistant at the end of each time step (i.e., there is a recovery rate $\delta=1$). The process stops when there are no more infected nodes. Then for node $u$ susceptible at time $t$,
+$$\Pr\Big( X_u(t+1) = 1\Big) = 1-\prod_{(v,u)\in E} (1-\beta X_v(t)).$$
+
+For this model, we are interested in relating the number of nodes that become infected at some time during the process to the number initially infected. The following theorem connects such a relation with the spectral radius $\rho=\rho(A)$ of the adjacency matrix.
+
+Let $|X(t)| = \sum_{i=1}^n X_i(t)$ and $|Y(t)| = \sum_{i=1}^n Y_i(t)$, the number of infected and resistant nodes at time $t$, respectively. And let $|Y(\infty)|$ be the number of nodes that are eventually removed/at some point infected. Also, let $X(t)$ be a vector indexed by nodes $i\in V$ with the $i$th entry $=X_i(t)$.
+
+\begin{theorem}
+Suppose $\beta \rho < 1$. Then
+$$\mathbf{E} [|Y(\infty)|] \leq \frac{1}{1-\beta \rho} \sqrt{n|X(0)|}.$$
+\end{theorem}
+
+We will use the following two results in our proof. The first is Boole's Inequality, also known as the Union Bound. The second is the Neumann Series, which is an analogous result on matrices to the geometric power series in $\mathbb{R}$.
+
+\begin{lemma} (Boole's Inequality/Union Bound)
+For a countable set of events $\{ A_i \}$,
+$$\Pr(\cup_i A_i) \leq \sum_i \Pr(A_i).$$
+\end{lemma}
+
+\begin{proof}
+This follows easily from the axioms of probability.
+\end{proof}
+
+\begin{lemma} (Neumann Series) For $A\in \mathbb{R}^{n\times n}$, if $\rho(A)<1$, then $(I-A)$ is invertible and
+$$(I-A)^{-1} = \sum_{t=0}^{\infty} A^t.$$
+\end{lemma}
+
+\begin{proof}
+Consider the partial sums $S_n := \sum_{t=0}^n A^t$. We have
+$$\lim_{n\rightarrow \infty} (I-A) S_n = \lim_{n\rightarrow \infty} \left( \sum_{t=0}^n A^t - \sum_{t=0}^n A^{t+1} \right) = \lim_{n\rightarrow \infty} (I-A^{n+1}) = I,$$
+since $\lim_{n\rightarrow \infty} A^n = 0$ as $\rho(A)<1$. And so $\sum_{t=0}^\infty A^t$ is the inverse for $I-A$.
+\end{proof}
+
+We now prove the main result.
+
+\begin{proof}
+Let $v$ be an arbitrary node. If $X_v(t)=1$ ($v$ is infected at start of time $t$), then there is a chain of distinct nodes $u_0,u_1,\ldots,u_{t-1},v$ along which the infection passes from initially infected $u_0$ to $v$. Let $S$ be the set of all chains in $G$ of the form $u_0, \ldots, u_{t-1},u_i=v$ such that $(u_{i-1},u_i)\in E$ for $1\leq i\leq t$ (note that we do not need to impose the condition that the $u_i$ are distinct since we are only seeking an upper bound).
+
+Applying Boole's Inequality to the sequence of events $\{\text{infection passes through chain } i\}$ for $i\in S$, we get
+$$\Pr(X_v(t) = 1) \leq \sum_{(u_0,\ldots,u_{t-1},v)\in S} \beta^t X_{u_0}(0).$$
+
+Then the probability that node $v$ ever gets infected is bounded above by
+$$\Pr(Y_v(\infty) = 1) \leq \sum_{t=0}^\infty \sum_{u\in V} (\beta A)^t_{uv} X_u(0),$$
+as the $uv$th entry of $A^t$ is the number of paths of length $t$ between nodes $u$ and $v$. Using this, we can bound the expected number of nodes that become infected:
+$$\begin{aligned}
+\mathbf{E}[|Y(\infty)|] &= \sum_{v\in V} \Pr(Y_v(\infty)=1) \\
+	&\leq \sum_{v\in V} \sum_{t=0}^\infty \sum_{u\in V} (\beta A)^t_{uv} X_u(0) \\
+	&= \sum_{t=0}^\infty e^T (\beta A)^t X(0),
+\end{aligned}$$
+where $e$ denotes the all ones vector.
+
+If $\beta \rho <1$, we can use the Neumann series to get
+$$\begin{aligned}
+\mathbf{E}[|Y(\infty)|] &\leq e^T \sum_{t=0}^\infty(\beta A)^t X(0) \\
+	&= e^T (I-\beta A)^{-1} X(0) \\
+	&\leq \|e\| \|(I-\beta A)^{-1}\| \|X(0)\|,
+\end{aligned}$$
+where $\| \cdot \|$ is the Euclidean norm in the case of a vector and the matrix operator norm in the case of a matrix. As $A$ is symmetric, $\|(I-\beta A)^{-1} \| = (1-\beta \rho)^{-1}$ (this is a consequence of Corollary~\ref{cor:matrix_norm}). Further
+$$\|X(0)\| = \sqrt{ \sum_{v\in V} X_v(0)^2} = \sqrt{|X(0)|}.$$
+and $\| e\| = \sqrt{n}$. Using these equivalences, we get
+$$\mathbf{E}[|Y(\infty)|] \leq \frac{1}{1-\beta \rho} \sqrt{n |X(0)|}.$$
+\end{proof}
+
+The theorem says that, given $\beta \rho < 1$, a ``small'' initial infected population leads to a small final epidemic size. For example, if $|X(0)|=1$, the final epidemic size is a multiple of $\sqrt{n}$ and the fraction of nodes that become infected tends to zero as $n\rightarrow \infty$. The upper bound is actually close to the best possible, which can be seen by considering the star-shaped network, as they do in \cite{draief:epidemics}.
+
+%If have time, can return to cover refinement of theorem under special cases: $G$ connected, and given maximal node degree $\Delta$ such that $\beta \Delta < 1$.
+
+Note that we can expand this SIR model into a continuous-time model by replacing the deterministic infection periods with iid exponentially distributed random variables. In the continuous-time case, we can also easily generalize to non-unit recovery rates $\delta>0$ (in fact, we can assume WLOG that $\delta=1$ as we can adjust the other rates and speed of the process accordingly). We do this continuous-time analysis for the SIS model in the next section; the analysis for the continuous-time SIR model follows similarly.
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{SIS Model} \label{sec:SIS}
+
+In this section, we introduce the SIS epidemic model, also referred to as the contact process. We will follow the proofs from the book \cite{draief:epidemics} and paper \cite{ganesh:SIS_paper}, clarifying and inserting details and a correction as necessary.
+
+% (later change to rate $\delta$)
+Let $X_i(t)$ indicate whether node $i$ is infected at time $t$ ($=1$ if infected and 0 otherwise). Infected nodes return to the susceptible state at recovery rate $\delta>0$. As demonstrated previously, we can assume WLOG that $\delta=1$ as we can adjust the other rates and speed of the process accordingly. Susceptible nodes become infected, as in the previous model, at a rate that is the product of the base infection rate, $\beta>0$, and the number of its neighbors that are infected. $X(t)$ is again a vector indexed by the nodes in $V$ with $i$th entry = $X_i(t)$, and $X(0)$ represents the initial conditions.
+
+More formally, the contact process is a Markov jump process on $\{0,1\}^n$, with non-zero transition rates $q(x,y)$ between states $x,y\in \{0,1\}^n$ given by
+$$\begin{aligned}
+q(x,x+e_i) &= \beta(1-x_i) \sum_{(j,i)\in E} x_j, \hspace{1cm} x\in \{0,1\}^n, i\in V, \\
+q(x,x-e_i) &= x_i, \hspace{1cm} x\in \{0,1\}^n, i\in V,
+\end{aligned}$$
+where $e_i$ denotes the vector with its $i$th coordinate equal to $1$ and all other coordinates equal to $0$.
+
+We will show sufficient conditions involving the spectrum of $A$ for both fast extinction and long survival of the contact process.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Fast Extinction}
+
+\begin{theorem} \label{thm:fast_extinction}
+For all $t\geq 0$,
+$$\Pr(X(t)\neq \mathbf{0}) \leq \sqrt{n \sum_{i=1}^n X_i(0)} \exp((\beta \rho -1)t)$$
+\end{theorem}
+
+In particular, notice that this probability goes exponentially to 0 as $t \rightarrow \infty$ if $\beta \rho < 1$.
+
+%We now have the machinery to prove Theorem~\ref{thm:fast_extinction}.
+
+\begin{proof}
+Define the \textbf{branching random walk} process on $\mathbb{N}^n$ as the skip-free Markov jump process with birth and death rates
+$$\beta_i^{brw}(x) = \beta \sum_{(j,i)\in E} x_j, \hspace{1cm} \delta_i^{brw}(x) = x_i, \hspace{0.5cm} i\in \{1,\ldots,n\}.$$
+Notice that we can see the contact process as a skip-free Markov jump process on $\mathbb{N}^n$ by extending the definition of its birth and death rates $\beta^c, \delta^c$ to $\mathbb{N}^n$:
+$$\beta_i^c(x) = \mathbf{1}_{x_i=0} \beta \sum_{(j,i)\in E} x_j, \hspace{1cm} \delta_i^c(x) = x_i, \hspace{1cm} i\in\{1,\ldots,n\}.$$
+
+Now, we verify that the branching random walk and contact process satisfy the assumptions of Theorem~\ref{thm:coupling}. Let $x\leq x'$ component-wise, and let $i$ be such that $x_i=x_i'$. Then $\delta_i^c(x) \geq \delta_i^{brw}(x')$ since the two terms equal $x_i$. Further,
+$$\beta_i^c(x) \leq \beta_i^{brw}(x')$$
+since $\beta_i^c(x) \leq \beta \sum_{(j,i)\in E} x_j$, which is $\leq \beta \sum_{(j,i)\in E} x_j' = \beta_i^{brw}(x')$ when $x\leq x'$. So Theorem~\ref{thm:coupling} applies.
+
+Then, as provided by the theorem, based on the coupled construction of $\left(X^c(t), X^{brw}(t)\right)_{t\geq 0}$ both with initial condition $X(0)\in \{0,1\}^n$,
+$$\begin{aligned}
+\Pr(X^c(t)\neq 0) &\leq \Pr(X^{brw}(t)\neq 0) \\
+	&= \Pr(\cup_i \{X_i^{brw}(t)\neq 0\}) \\
+	&\leq \sum_i \Pr(X_i^{brw}(t)\neq 0) \hspace{1cm} \text{by Boole's Inequality}\\
+	&= \sum_i \mathbf{E} [X_i^{brw}(t)] \\
+	&= e^T \mathbf{E}[X^{brw}(t)].
+\end{aligned}$$
+
+The branching random walk's linear transition rate structure means that the change in $\mathbf{E}[X_i^{brw}(t)]$ is equal to $\beta_i^{brw}(\mathbf{E}[X^{brw}(t)]) - \delta_i^{brw}(\mathbf{E}[X^{brw}(t)])$. The vector form of this is
+$$\frac{d}{dt} \mathbf{E}[X^{brw}(t)] = \beta A \mathbf{E}[X^{brw}(t)] - \mathbf{E}[X^{brw}(t)].$$
+This is a very simple differential equation whose solution is an exponential. It's easy to see this in the one-dimensional case. The vector solution is
+$$\mathbf{E}[X^{brw}(t)] = \exp(t(\beta A - I))X(0),$$
+where $\exp(t(\beta A - I))$ is the matrix exponential.
+
+We then have
+$$\Pr(X^c(t)\neq 0) \leq e^T \exp(t(\beta A - I))X(0).$$
+Applying the Cauchy-Schwarz inequality,
+$$e^T \exp(t(\beta A - I))X(0) \leq \|e\| \| \exp(t(\beta A - I))X(0) \|.$$
+
+Since $A$ is symmetric, $\exp(t(\beta A - I))$ is symmetric. Then, based on the definition of the operator norm,
+$$\| \exp(t(\beta A - I))X(0) \| \leq \| \exp(t(\beta A - I)) \| \|X(0)\| = \rho(\exp(t(\beta A - I))) \|X(0)\|,$$
+where $\rho(\cdot)$ represents the spectral radius. Using basic properties of eigenvalues, $\rho(\exp(t(\beta A - I))) = \exp(t(\beta \rho - 1))$, where $\rho = \rho(A)$. And so
+$$\begin{aligned}
+\Pr(X^c(t) \neq 0) &\leq \|e\| \exp(t(\beta \rho - 1)) \|X(0)\| \\
+	&= \sqrt{n \sum_{i=1}^n X_i^2(0)} \exp((\beta \rho - 1)t) \\
+	&= \sqrt{n \sum_{i=1}^n X_i(0)} \exp((\beta \rho - 1)t) \hspace{1cm} \text{ since } X_i^2(0) = X_i(0)\in \{0,1\}.
+\end{aligned}$$
+Thus we have the result of the theorem
+\end{proof}
+
+Our main application of Theorem~\ref{thm:fast_extinction} will be the following corollary, which gives our fast extinction result.
+
+\begin{corollary}
+(Fast Extinction) Let $\tau(t)$ be the time to absorption at $\mathbf{0}$ from time $t$ of a contact process on a finite graph $G$ on $n$ nodes with base infection rate $\beta$ and arbitrary initial condition $X(0)\in \{0,1\}^n$. Then, if the spectral radius $\rho$ of the adjacency matrix of $G$ is such that $\beta \rho < 1$,
+$$\mathbf{E}[\tau(0)] \leq \frac{\ln n + 1}{1-\beta \rho}.$$
+\end{corollary}
+
+\begin{proof}
+$$\begin{aligned}
+\mathbf{E}[\tau(0)] &= \int_0^\infty \Pr(\tau(t) > 0) dt \\
+	&= \int_0^\infty \Pr(X(t) \neq \mathbf{0})dt \\
+	&\leq \int_0^\infty \min \left(1, \sqrt{n \sum_{i=1}^n X_i(0)} \exp((\beta \rho - 1)t) \right) dt \\
+	&\leq \int_0^\infty \min \left(1, n \exp(-(1- \beta \rho)t) \right) dt \hspace{1cm} \text{since } \sum_{i=1}^n X_i(0) \leq n \\
+	&= \int_0^T 1 dt + \int_T^\infty n \exp(-(1- \beta \rho)t) dt \\
+	&= T + \int_T^\infty n \exp(-(1- \beta \rho)t) dt,
+\end{aligned}$$
+where $T = \frac{\ln n}{1-\beta \rho}$, the point after which $n \exp(-(1- \beta \rho)t) < 1$. And so we get
+$$\mathbf{E}[\tau(0)] \leq T + \frac{n}{1-\beta \rho} \exp(-(1-\beta \rho)T) = \frac{\ln n + 1}{1-\beta \rho}.$$
+\end{proof}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Long Survival}
+
+We now present a sufficient condition for long survival of the contact process and relate this result to the spectral structure of the underlying graph.
+
+\begin{definition}
+For graph $G$ on the node set $\{1,\ldots,n\}$, and any integer $m < n$, the \textbf{isoperimetric constant} $\eta(m)$ of $G$ is
+$$\eta(m) = \min_{S\subset \{1,\ldots,n\},|S|\leq m} \frac{E(S,\bar S)}{|S|},$$
+where $\bar S$ is the complementary set $\{1,\ldots,n\} \setminus S$, and $E(S,T)$ is the number of edges with one endpoint in $S$ and the other in $T$.
+\end{definition}
+
+The isoperimetric constant tells us whether there is a set of nodes of size $m$ that has few links with the wider graph.
+
+\begin{theorem} \label{thm:long_survival}
+Let $G$ be a finite graph on $n$ nodes. Assume that for some $m\leq n$ and some $r\in(0,1)$,
+$$\beta \eta(m) \geq \frac{1}{r},$$
+Let $\tau$ be the time to absorption of the contact process on $G$. Then, for any initial condition $X(0)\neq \mathbf{0}$,
+$$\Pr \left(\tau \geq \frac{s}{2m} \right) \geq \frac{1-r}{1-r^m} \left( \frac{1-r^{m-1}}{1-r^m} \right)^{s-1} \left(1-o(s^{-1}) \right), \hspace{0.5cm} s \in\mathbb{N},$$
+where $o(s^{-1})$ is independent of the model parameters.
+\end{theorem}
+
+In our proof, we will need a more general form of the Chernoff bound used in class.
+\begin{lemma} \label{lemma:chernoff}
+(Chernoff bound) Given iid random variables $X_1,\ldots,X_n$ and $a\in \mathbb{R}$,
+$$\Pr\left(\sum_{i=1}^n X_i \leq na \right) \leq \exp(n \cdot h(a)),$$
+where
+$$h(a) = \inf_{\theta > 0} \{ \theta a + \ln \mathbf{E}[\exp(-\theta X_1)]\}.$$
+\end{lemma}
+
+\begin{proof}
+For $\theta>0$, we have
+$$\begin{aligned}
+\Pr\left(\sum_{i=1}^n X_i \leq na\right) &= \Pr\left( \exp\left(-\theta \sum_{i=1}^n X_i\right) \geq \exp(-n\theta a)\right) \\
+	&\leq \mathbf{E}\left[ \exp\left( -\theta \sum_{i=1}^n X_i \right)\right] \exp(n\theta a) \hspace{1cm} \text{ by Chebyshev's inequality} \\
+	&\leq \inf_{\theta>0} \exp(n\theta a) \prod_{i=1}^n \mathbf{E} [\exp(-\theta X_i)] \hspace{1cm} \text{ by independence}\\
+	&= \inf_{\theta >0} \exp(n\theta a) \mathbf{E}[\exp(-\theta X_1)]^n \hspace{1cm} \text{ since iid} \\
+	&= \inf_{\theta >0} \exp(n\theta a) \exp\Big(n \ln \mathbf{E}[\exp(-\theta X_1)]\Big) \\
+	&= \inf_{\theta >0} \exp\Big(n\big(\theta a + \ln \mathbf{E}[\exp(-\theta X_1)]\big)\Big) \\
+	&= \exp(n \cdot h(a)),
+\end{aligned}$$
+where $h(a) = \inf_{\theta>0} \{ \theta a + \ln \mathbf{E}[\exp(-\theta X_1)]\}$.
+\end{proof}
+
+
+\begin{proof} (of Theorem~\ref{thm:long_survival})
+Let $\{Z(t)\}_{t\geq 0}$ be the Markov jump process defined on the state space $\{0,\ldots,m\}$ with non-zero transition rates
+$$\begin{aligned}
+q(z,z+1) &= r^{-1}z\mathbf{1}_{z<m}, \hspace{0.5cm} z\in \{0,\ldots,m\}, \\
+q(z,z-1) &= z, \hspace{0.5cm} z\in \{0,\ldots,m\}.
+\end{aligned}$$
+
+Next, we show that for any initial condition $X(0)\neq \mathbf{0}$, there is a coupling of the contact process on $G$ with $\{Z(t)\}_{t\geq 0}$ with initial condition $Z(0)=1$ such that $\sum_{i=1}^n X_i(t) \geq Z(t)$ for all $t\geq 0$. Define the joint process  $(X,Z)$ on the state space $\{(x,z)\in \{0,1\}^n \times \{0,\ldots,m\},z\leq \sum_{i=1}^n x_i\}$ as follows. For any state $(x,z)$ and any $i\in \{1,\ldots,n\}$, if $\sum_{i=1}^n x_i > z$, there are non-zero transition rates
+$$\begin{aligned}
+q((x,z),(x+e_i,z)) &= \beta(1-x_i) \sum_{(j,i)\in E} x_j, \\
+q((x,z),(x-e_i,z)) &= x_i, \\
+q((x,z),(x,z+1)) &= r^{-1}z \mathbf{1}_{z<m}, \\
+q((x,z),(x,z-1)) &= z.
+\end{aligned}$$
+And if $\sum_{i=1}^n x_i = z$, there are non-zero transition rates
+$$\begin{aligned}
+q((x,z),(x+e_i,z+1)) &= c_i(x), \\
+q((x,z),(x+e_i,z)) &= \beta(1-x_i) \sum_{(j,i)\in E} x_j - c_i(x), \\
+q((x,z),(x-e_i,z-1)) &= x_i,
+\end{aligned}$$
+where $c_i(x)$ satisfies
+$$0\leq c_i(x)\leq \beta(1-x_i) \sum_{(j,i)\in E} x_j, \hspace{0.5cm} i\in \{1,\ldots,n\},$$
+which restricts the transition rates to be non-negative, and
+$$\sum_{i=1}^n c_i(x) = r^{-1} z \mathbf{1}_{z<m}.$$
+
+Such $c_i(x)$ exist if
+$$\beta E(S,\bar S) = \sum_{i=1}^n \beta(1-x_i) \sum_{(j,i)\in E} x_j \geq r^{-1}z \mathbf{1}_{z<m},$$
+where $S$ is the set of $j\in \{1,\ldots,n\}$ such that $x_j=1$. In this case, we have $|S| = \sum_j x_j = z\leq m$, and so, using the definition of the isoperimetric constant $\eta (m)$,
+$$\beta E(S,\bar S) \geq \beta \eta(m) z.$$
+Then, since we are given $\beta \eta(m) \geq r^{-1}$, we have, as desired,
+$$\beta E(S,\bar S) \geq \beta \eta(m) z \geq \frac{z}{r} \geq r^{-1}z \mathbf{1}_{z<m}.$$
+
+Lemma~\ref{lemma:coupling} gives us the desired dynamics (note that in this problem, we have a finite state space, and so uniformization applies), and the coupling implies
+$$\Pr(\tau > s) \geq \Pr(Z(s) = 0).$$
+
+To evaluate $\Pr(Z(s) = 0)$, consider the discrete-time embedded Markov chain $\{Y(k)\}_{k\geq 0}$ keeping track of the states visited by process $\{Z(t)\}_{t\geq 0}$. It has non-zero transition probabilities given by
+$$\begin{aligned}
+\Pr\Big(Y(k+1)=y+1 | Y(k)=y\Big) &= \frac{y/r}{y/r+y} = \frac{1}{1+r}, \hspace{0.5cm} y\in\{1,\ldots,m-1\}, \\
+\Pr\Big(Y(k+1)=y-1 | Y(k)=y\Big) &= \frac{y}{y/r+y} = \frac{r}{1+r}, \hspace{0.5cm} y\in\{1,\ldots,m-1\}, \\
+\Pr\Big(Y(k+1)=m-1 | Y(k)=m\Big) &= 1, \\
+\Pr\Big(Y(k+1)=0 | Y(k)=0\Big) &= 1.
+\end{aligned}$$
+
+The probability $\pi_k$ that, starting from state $k\in\{0,\ldots,m\}$, $\{Y(n)\}_{n\geq 0}$ hits $m$ before it is absorbed at $0$ is
+$$\pi_k = \frac{1-r^k}{1-r^m}.$$
+This follows from the solution to the gambler's ruin problem (solved in undergraduate probability) characterized by the following difference equation problem:
+$$\pi_0=0,\pi_m=1,(1+r)\pi_k=r\pi_{k+1}+\pi_{k-1}, k\in\{1,\ldots,m-1\}.$$
+
+Then the probability that $\{Z(t)\}_{t\geq 0}$ visits state $m$ at least $s$ times before being absorbed at 0 is equal to the probability that the $\{Y(n)\}_{n\geq 0}$ visits state $m$ at least $s$ times. Then
+$$\Pr\Big(\{Y(n)\}_{n\geq 0} \text{ visits state } m \text{ at least } s \text{ times}\Big) = \frac{1-r}{1-r^m} \left(\frac{1-r^{m-1}}{1-r^m}\right)^{s-1},$$
+the probability that we reach $m$ from the initial state $1$ times the probability that we reach the $m$ state $s-1$ more times starting from state $m-1$, which follows from state $m$ with probability 1.
+
+After each entrance into state $m$, $\{Z(t)\}_{t\geq 0}$ remains there for an exponentially distributed holding time, with mean $1/m$. Then the probability that $\{Z(t)\}_{t\geq 0}$ is not absorbed by time $s/2m$ is
+$$\Pr\Big( Z(s/2m) > 0 \Big) \geq \Pr \left( \sum_{i=1}^s E_i \geq s/2 \right) \frac{1-r}{1-r^m} \left(\frac{1-r^{m-1}}{1-r^m}\right)^{s-1},$$
+where the $E_i$ are iid random variables exponentially distributed with mean 1. The Chernoff bound from Lemma~\ref{lemma:chernoff} then gives us
+$$\Pr\left(\sum_{i=1}^s E_i \geq s/2\right) = 1 - \Pr\left(\sum_{i=1}^s E_i \leq s/2\right) \geq 1 - \exp(s\cdot h(1/2)),$$
+where
+$$\begin{aligned}
+h(1/2) &= \inf_{\theta >0} \left\{ \frac{\theta}{2} + \ln \mathbf{E}[\exp(-\theta E_1)]\right\} \\
+	&= \inf_{\theta >0} \left\{ \frac{\theta}{2} + \ln \mathbf{E}\left[\exp\left(\frac{1}{1+\theta}\right)\right]\right\} \\
+	&= \frac{1}{2} - \ln(2) \hspace{1cm} \text{minimized at } \theta=1.
+\end{aligned}$$
+The term $\exp(s\cdot h(1/2))$ is $o(s^{-1})$ since $\ln 2 > 1/2$, and so the result follows from this.
+\end{proof}
+
+An application of this result is the following corollary.
+
+\begin{corollary}
+Consider a sequence of finite graphs $G_n$ on $n$ nodes, a base infection rate $\beta_n$, and an integer $m_n \geq n^a$, where $a>0$ is a fixed constant such that
+$$\beta_n \eta(m_n,G_n) \geq \frac{1}{r},$$
+where $r\in (0,1)$ is fixed and $\eta(m,G)=\eta(m)$ with respect to graph $G$. Let $\tau_n$ be the time to extinction of the contact process on $G_n$ with parameter $\beta_n$. Then
+$$\mathbf{E}[\tau_n] \geq \exp\left( bn^a\right),$$
+for some constant $b>0$.
+\end{corollary}
+
+\begin{proof}
+Fix $n>0$. By Theorem~\ref{thm:long_survival}, we have $\forall s\in \mathbb{N}$,
+$$\mathbf{E}[\tau_n] \geq \frac{s}{2m} \frac{1-r}{1-r^m} \left( \frac{1-r^{m-1}}{1-r^m}\right)^{s-1} \left( 1-o(s^{-1})\right),$$
+where $m=m_n$. Then taking $s= \left \lfloor{r^{-m+1}} \right \rfloor$, we have
+$$\begin{aligned}
+\mathbf{E}[\tau_n] &\geq \frac{\left \lfloor{r^{-m+1}} \right \rfloor}{2m} \frac{1-r}{1-r^m} \left( \frac{1-r^{m-1}}{1-r^m}\right)^{s-1} \left( 1-o(s^{-1})\right) \\
+	&\geq (1-r)(1-O(r^m)) \frac{\left \lfloor{r^{-m+1}} \right \rfloor}{2m} \left(1-r^{m-1} \frac{1-r}{1-r^m}\right)^{r^{-m+1}-1} \\
+	&\geq (1-r)(1-O(r^m)) \frac{\left \lfloor{r^{-m+1}} \right \rfloor}{2m} \left(1-r^{m-1} \frac{1-r}{1-r^m}\right)^{r^{-m+1}} \\
+	&\geq (1-r)(1-O(r^m)) \frac{\left \lfloor{r^{-m+1}} \right \rfloor}{2m} \exp\left( -\frac{1-r}{1-r^m}\right) \\
+	&\geq \frac{1-r}{e} (1-O(r^m)) \exp\Big(\ln(1/r)(m-1)-\ln 2m\Big).
+\end{aligned}$$
+For $m\geq n^a$, the exponent $\ln(1/r)(m-1)-\ln(2m)$ is larger than $bn^a$ for some suitable constant $b>0$ (for instance, taking $b=\ln(1/r)/2$), and so the result follows.
+\end{proof}
+
+We can use Theorem~\ref{thm:long_survival} to relate exponentially long survival of an SIS epidemic to the spectral structure of the underlying graph $G$.
+
+\begin{corollary} \label{cor:spectral_long_survival}
+Let $\lambda_2(L_G)$ be the second smallest eigenvalue of the Laplacian matrix $L_G$ ($G$ connected). Let
+$$r':= \frac{2}{\beta \lambda_2(L_G)} < 1.$$
+Then Theorem~\ref{thm:long_survival} is satisfied using $r:=r'$ in place of the definition provided above and $m=\left \lfloor{n/2}\right \rfloor$.
+\end{corollary}
+
+This result follows from Corollary~3.8 in \cite{mohar:laplace_eigs}, which states that for any graph $G$, the following inequality holds:
+$$\eta(G) := \eta\big(\left \lfloor{n/2}\right \rfloor\big) \geq \frac{\lambda_2(L_G)}{2}.$$
+This result is similar to some bounds we proved in class and will be left as a future exercise.
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Concluding Remarks}\label{sec:conclusion}
+
+I think the results in Sections \ref{sec:SIR} and \ref{sec:SIS} can be generalized fairly easily to weighted undirected graphs. This is a next step in the project. I believe there is also a generalization for directed graphs. For the SIS results in the directed case, I think we can construct a similar upper bound using a suitable definition of conductance and a similar lower bound using singular values (square roots of the eigenvalues of $A^T A$) instead of eigenvalues of $A$. The latter requirement arises from Proposition~\ref{prop:matrix_norm}'s relation of operator norm to singular values for a non-symmetric matrix.
+
+The papers \cite{draief:SIR_paper} and \cite{ganesh:SIS_paper} introduce specific results for networks whose node degree distributions follow a power law. This is a property of most real-world networks. When extending results to directed graphs, it would also be interesting to expand these results to directed power law networks.
+
+Proposition~\ref{prop:max_degree} gives us a preliminary understanding of optimal curing/vaccination strategies. In particular, it makes sense to target nodes for vaccination based on degree (concentrating more on higher degree nodes) as this effectively lowers an upper bound on the spectral radius, which we've seen plays a pivotal role in determining the epidemic threshold. A next step along this line is to expand this understanding to results from \cite{borgs:curing_paper} and \cite{drakopoulos:curing_paper}.
+
+Further, Corollary~\ref{cor:spectral_long_survival} shows that the value $\lambda_2(L_G)$ gives some information about the required conditions (e.g., values of $\beta$) for an epidemic to have exponential survival. We've seen in class that $\lambda_2(L_G)$ is related to the size of sparse cuts in $G$. Initiating quarantines can reduce the size of sparse cuts, and so reduce the size of $\lambda_2(L_G)$. And so this relation can inform us about when quarantines may be necessary and useful in containing and extinguishing contagion. Information about the eigenvalues of $L_G$ (for instance, information from Cheeger-like inequalities) could be useful in designing such quarantines that are minimally intrusive.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\begin{thebibliography}{10}
+
+\bibitem{sigman:ctmc}
+	Karl Sigman,
+	\emph{Continuous-Time Markov Chains},
+	Lecture notes from IEOR 6711 at Columbia University (2009),
+	available at \url{http://www.columbia.edu/~ks20/stochastic-I/stochastic-I-CTMC.pdf}.
+
+\bibitem{whitt:ctmc}
+	Ward Whitt,
+	\emph{Continuous-Time Markov Chains},
+	Lecture notes from Columbia University Department of Industrial Engineering and Operations Research (2012),
+	available at \url{http://www.columbia.edu/~ww2040/3106F13/CTMCnotes121312.pdf}.
+
+\bibitem{draief:epidemics}
+	Moez Draief, Laurent Massouli\'e,
+	\emph{Epidemics and Rumours in Complex Networks},
+	London Mathematical Society Lecture Note Series: 369, Cambridge University Press, New York,
+	available at \url{https://www.lincs.fr/wp-content/uploads/2013/01/CUP_book_final.pdf}.
+
+\bibitem{draief:SIR_paper}
+	Moez Draief, Ayalvadi Ganesh, Laurent Massouli\'e,
+	\emph{Thresholds for Virus Spread on Networks},
+	Annals of Applied Probability \textbf{8} (2008), no. 2, 359-378,
+	available at \url{https://www.jstor.org/stable/25442634}.
+
+\bibitem{ganesh:SIS_paper}
+	A. Ganesh, L. Massouli\'e, D. Towsley,
+	\emph{The Effect of Network Topology on the Spread of Epidemics},
+	Proceedings of the 25th Annual Joint Conference of the IEEE Computer and Communications Societies (INFOCOM) \textbf{2} (2005), 1455-1466,
+	available at \url{https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/infocom-worm.pdf}.
+
+\bibitem{mohar:laplace_eigs}
+	B. Mohar,
+	\emph{Some Applications of Laplace Eigenvalues of Graphs},
+	Graph Symmetry: Algebraic Methods and Applications, Eds. G. Hahn and G. Sabidussi, NATO ASI Ser. C 497, Kluwer (1997), 225-275,
+	available at \url{http://www.fmf.uni-lj.si/~mohar/Papers/Montreal.pdf}.
+
+\bibitem{borgs:curing_paper}
+	Christian Borgs, Jennifer Chayes, Ayalvadi Ganesh, Amin Saberi,
+	\emph{How to Distribute Antidote to Control Epidemics},
+	Random Structures \& Algorithms \textbf{37} (2010), no. 2, 204-222,
+	available at \url{http://onlinelibrary.wiley.com/doi/10.1002/rsa.20315/full}.
+
+\bibitem{drakopoulos:curing_paper}
+	Kimon Drakopoulos, Asuman Ozdaglar, John N. Tsitsiklis,
+	\emph{An Efficient Curing Policy for Epidemics on Graphs},
+	IEEE Transactions on Network Science and Engineering \textbf{1} (2014), no. 2, 67-75,
+	available at \url{http://ieeexplore.ieee.org/document/7010945}.
+
+\end{thebibliography}
+
+
+
+\end{document}
